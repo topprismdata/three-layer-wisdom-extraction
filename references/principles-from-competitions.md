@@ -174,10 +174,23 @@ scope: Domain
 decay_days: 365
 evidence_count: 1
 rescued_count: 1
+declared_success: 1
+verified_actual: 1
+calibration: 1.00
 falsified_count: 0
 last_validated: 2026-06-02
 -->
 ```
+
+### What this principle CANNOT catch
+
+| Failure mode | Caught? | Why not |
+|--------------|---------|---------|
+| Val stable + LB stable (no change) | ❌ | Only fires on val improvement |
+| Val improvement = LB improvement (happy case) | ❌ | By design |
+| Multiple proxies disagree (some ↑, some ↓) | ❌ | Assumes single proxy |
+| Slow drift over many cycles | ❌ | Designed for step changes |
+| Proxy-target gap from data quality (not gaming) | ❌ | About gaming, not sample bias |
 
 ### The Stale Feature Trap
 
@@ -200,11 +213,25 @@ scope: Domain
 decay_days: 365
 evidence_count: 2
 rescued_count: 1
+declared_success: 2
+verified_actual: 2
+calibration: 1.00
 falsified_count: 0
 last_validated: 2026-06-02
 known_falsification: v11 bfill attempt made LB 2x worse (3194 → 6646)
 -->
 ```
+
+### What this principle CANNOT catch
+
+| Failure mode | Caught? | Why not |
+|--------------|---------|---------|
+| Feature exists at inference but **different distribution** | ❌ | Checks existence, not distribution shift |
+| Feature exists but **different meaning** (concept drift) | ❌ | Same form ≠ same semantics |
+| **Almost** exists (e.g., 95% coverage) | ⚠️ Partial | bfill "works" but silently changes distribution |
+| **Data leakage** via clever feature engineering | ❌ | Stale ≠ leaky; different mechanisms |
+| **Single-step inference** with stale features | ❌ | Doesn't apply — single step has overlap |
+| **Streaming features** with concept drift | ❌ | Concept drift vs feature absence are different |
 
 ### Process Diversity > Output Diversity
 
@@ -231,11 +258,25 @@ scope: Domain
 decay_days: 365
 evidence_count: 1
 rescued_count: 1
+declared_success: 1
+verified_actual: 1
+calibration: 1.00
 falsified_count: 0
 last_validated: 2026-06-02
 skeptic_boundary: correlation > 0.999 may not help even with process diversity
 -->
 ```
+
+### What this principle CANNOT catch
+
+| Failure mode | Caught? | Why not |
+|--------------|---------|---------|
+| Models are **fundamentally different** (NN + tree) but perform similarly | ❌ | High diversity in form ≠ diversity in errors |
+| All models have the **same blind spot** | ❌ | Diversity in form ≠ diversity in error patterns |
+| Correlation 0.99 but **one model is strictly better** | ❌ | Presumes both contribute |
+| Test distribution differs from training | ❌ | Out-of-distribution, not ensemble problem |
+| **Latency/cost** constraint forces choosing 1 model | ❌ | Operational, not principle |
+| Models trained on **different data subsets** (data diversity) | ⚠️ Partial | Process ≠ data |
 
 ### Capacity Without Diversity = Overfit
 
@@ -264,11 +305,26 @@ scope: Domain
 decay_days: 365
 evidence_count: 1
 rescued_count: 1
+declared_success: 1
+verified_actual: 1
+calibration: 1.00
 falsified_count: 0
 last_validated: 2026-06-02
 known_falsification_attempt: v19 (8K + lr=0.01 + MAE) had val 1371 but LB 2742
 -->
 ```
+
+### What this principle CANNOT catch
+
+| Failure mode | Caught? | Why not |
+|--------------|---------|---------|
+| Val set is **too large** to overfit (e.g., 1M samples) | ❌ | Principle presumes small val |
+| Capacity increase is **truly needed** (model underfits) | ❌ | Underfit → more capacity is correct |
+| Test distribution = val distribution (truly) | ❌ | When they match, no overfit risk |
+| **Regularization** properly tuned (e.g., strong dropout) | ❌ | Modern regularization can decouple val/test |
+| **Bayesian model averaging** | ❌ | Different mechanism — explicit uncertainty |
+| **Pretrained models** where capacity is "fixed" | ❌ | One-shot, not over-training |
+| Val set is **continuously refreshed** from production | ❌ | Live val eliminates the overfit risk |
 
 ### Lessons from the Extraction Process
 
@@ -282,3 +338,7 @@ known_falsification_attempt: v19 (8K + lr=0.01 + MAE) had val 1371 but LB 2742
 4. **Falsification count > 0 is healthy** — even one strong counter-example is
    valuable data. The principles above all have at least one attempted falsification
    documented in their `known_falsification` field.
+5. **Calibration surfaced nothing** — declared_success equals verified_actual for all
+   4 principles (calibration = 1.00). This is the right outcome: claims matched records.
+   If calibration had been < 1.0, it would have meant "we're overconfident about
+   this principle rescuing us" — a useful signal to demote or re-validate.
