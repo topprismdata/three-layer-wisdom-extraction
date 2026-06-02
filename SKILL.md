@@ -150,6 +150,79 @@ Present the three layers to the user in this format:
 Ask the user to review and challenge the Layer 3 principles. Their pushback often reveals
 whether a principle is genuinely universal or still domain-specific.
 
+### Step 5: Lifecycle Management (New in v1.1)
+
+A principle that "sounds right" is not a principle that has earned its keep. After Layer 3
+extraction, attach **tempera-style lifecycle metadata** to every principle so it can be
+tracked, audited, and pruned over time.
+
+#### Verification State Machine
+
+Each principle moves through states as evidence accumulates:
+
+```
+Untested ──evidence_count ≥ 1──> TestsPass ──rescued_count ≥ 1──> Merged ──stable ≥ 6mo──> StableNoRevert
+   │                                                                                          │
+   └──────falsified_count ≥ 1 with strong counter-evidence────────────────────────────────> Deprecated
+```
+
+- **Untested**: Just extracted, no in-project evidence yet. **Do not** quote in CLAUDE.md.
+- **TestsPass**: At least one real experiment supports the principle. Safe to recommend.
+- **Merged**: Has actually **changed a decision** in a real session (rescued_count ≥ 1).
+- **StableNoRevert**: Survived 6+ months of follow-up challenges without being falsified.
+- **Deprecated**: Has been falsified by stronger counter-evidence. Keep in file with
+  status=Deprecated for historical context, but exclude from recommendations.
+
+#### ValidityScope
+
+Each principle has a scope that determines its **decay rate** (inspired by
+[tempera](https://github.com/anvanster/tempera)):
+
+| Scope | Decay (days) | Meaning |
+|-------|--------------|---------|
+| `Forever` | never | Universal truth (e.g., distribution mismatch principle) |
+| `Language` | 1095 (3y) | Tied to a specific programming language's ecosystem |
+| `Domain` | 365 (1y) | Cross-project but same field (e.g., ML) |
+| `Crate` | 180 | Tied to a specific library or framework |
+| `Workaround` | 90 | Fixes a temporary issue; expires when the issue closes |
+| `Project` | 70 | Project-specific convention |
+
+**Action**: When a principle exceeds its scope's TTL, mark for **FADING** review. Either
+(a) revalidate (update `last_validated`), or (b) demote scope to a more specific one,
+or (c) DEPRECATE.
+
+#### Metadata Schema (YAML front matter)
+
+```yaml
+<!-- principle-metadata
+status: TestsPass                # Untested | TestsPass | Merged | StableNoRevert | Deprecated
+scope: Domain                    # Forever | Language | Domain | Crate | Workaround | Project
+decay_days: 365                  # override default; optional
+evidence_count: 1                # number of in-project experiments supporting this
+rescued_count: 1                 # number of times it changed a real decision
+falsified_count: 0               # number of in-project counter-examples
+last_validated: 2026-06-02       # ISO date of last validation; drives decay check
+-->
+```
+
+See `references/lifecycle-metadata-schema.md` for the full schema and worked examples.
+
+#### Maintenance Tools (Optional, Recommended)
+
+Two small bash scripts implement the lifecycle checks (adapted from tempera's
+ValidityScope + HaluMem-style dedup):
+
+- `check_stale.sh` — Scans all `*.md` files for `<!-- principle-metadata -->` blocks,
+  computes age, flags FADING principles past their scope TTL.
+- `check_duplicate.sh` — Splits files by `## Principle` headers, computes Jaccard word
+  overlap between all pairs, flags potential duplicates for consolidation.
+
+A `dream_cycle.sh` (optional) runs `check_stale + check_duplicate + meta_optimize` on a
+weekly cadence, with a `.last_dream_cycle` marker file to silence reminders for 7 days.
+
+These are reference implementations; the **methodology** (state machine + scope + decay)
+is the contribution, not the scripts.
+
 ## Integration with Existing Skills
 
 | Skill | Layer | What it captures | Output format |
@@ -184,4 +257,6 @@ extracted from past projects.
 - Multi-actor validation: Multi-Actor Insight Extraction (Nature Scientific Reports, 2025)
 - Analogical transfer: Structure-Mapping Theory (Gentner 1983), Transferable Meta-Learning (Kang 2023)
 - Charlie Munger's "latticework of mental models" framework
+- **Lifecycle management** (v1.1): [tempera](https://github.com/anvanster/tempera) (ValidityScope, decay), [HaluMem](https://github.com/MemTensor/HaluMem) (hallucination eval for memory)
 - See `references/principles-from-competitions.md` for worked examples
+- See `references/lifecycle-metadata-schema.md` for the YAML metadata format

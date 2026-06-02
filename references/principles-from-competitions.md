@@ -143,3 +143,142 @@ All eleven principles (6 from Store Sales + 5 from Knowledge System Redesign):
 - Pass non-trivial (not obvious assumptions)
 - Pass actionable (suggest concrete changes)
 - Pass falsifiable (can describe evidence that would disprove)
+
+---
+
+## From: Walmart Recruiting - Store Sales Forecasting (2026-05-25 ~ 2026-06-02)
+
+**Setup**: 8 days, 24 submissions, Public LB 3522 → 2661.50 (24% WMAE reduction).
+4 cross-domain principles extracted using three-layer-wisdom-extraction.
+Each principle carries tempera-style metadata (see `lifecycle-metadata-schema.md`).
+
+### The Proxy Paradox
+
+"Optimization under one evaluation regime can drift AWAY from the actual goal if the
+metric is gameable."
+
+- **Origin**: v14 had val WMAE 1244 (project-best) but Public LB 3490 (project-worst).
+  v19 had val 1371 (val 2nd-best) but Public LB 2742 (worse than v18's 2702).
+- **Why it transfers**: Any "use A to evaluate B" process has this risk. A is more easily
+  gamed than B because A is in your control while B is in the world.
+- **Domains**: A/B testing (p-value vs revenue), education (practice tests vs exams),
+  medicine (surrogate endpoints vs outcomes), code review (lint warnings vs bugs),
+  hiring (interview performance vs job performance)
+- **Falsification attempted**: v14 — val improvement did NOT predict LB improvement.
+  Strongly supported.
+
+```yaml
+<!-- principle-metadata
+status: TestsPass
+scope: Domain
+decay_days: 365
+evidence_count: 1
+rescued_count: 1
+falsified_count: 0
+last_validated: 2026-06-02
+-->
+```
+
+### The Stale Feature Trap
+
+"Features derived from data that won't exist (or will be different) at inference time create
+silent distribution shift."
+
+- **Origin**: All lag features in Walmart (lag_1..lag_4) reference NaN test rows → bfill →
+  static values. Removing them = -772 LB points. v11 bfill attempt made LB 2x worse.
+- **Why it transfers**: Training-inference mismatch is universal. Any feature whose value
+  depends on time, future events, or other entities that change is at risk.
+- **Domains**: Recommender systems (cold-start users, no click history), medical diagnosis
+  (using future test results), legal NLP (case precedents), financial risk (using
+  defaulted outcomes to predict)
+- **Falsification attempted**: v11 bfill "fix" = LB disaster. Strongly supported.
+
+```yaml
+<!-- principle-metadata
+status: TestsPass
+scope: Domain
+decay_days: 365
+evidence_count: 2
+rescued_count: 1
+falsified_count: 0
+last_validated: 2026-06-02
+known_falsification: v11 bfill attempt made LB 2x worse (3194 → 6646)
+-->
+```
+
+### Process Diversity > Output Diversity
+
+"Two models with 99% identical predictions can still help each other if their training
+processes differ."
+
+- **Origin**: v18 (MSE) + v19 (MAE) have prediction correlation 0.9941 but their 0.6/0.4
+  blend improved Public LB by 41 points. Standard correlation rules would have skipped
+  this blend.
+- **Why it transfers**: Similar outputs may come from different error patterns. Ensemble
+  reduces error when errors are uncorrelated, even if predictions look similar. Different
+  training processes often produce different error patterns.
+- **Domains**: Investment portfolio (correlated assets but different valuations),
+  team composition (similar skills, different backgrounds), medical diagnosis
+  (imaging + blood ensemble), statistical forecasting (combining ETS + ARIMA + ML)
+- **Boundary**: Correlation > 0.999 — even process diversity doesn't help. Need 3+
+  independent training pipelines.
+- **Falsification attempted**: Not yet. Theoretical boundary at 0.999.
+
+```yaml
+<!-- principle-metadata
+status: TestsPass
+scope: Domain
+decay_days: 365
+evidence_count: 1
+rescued_count: 1
+falsified_count: 0
+last_validated: 2026-06-02
+skeptic_boundary: correlation > 0.999 may not help even with process diversity
+-->
+```
+
+### Capacity Without Diversity = Overfit
+
+"Increasing model capacity on a fixed validation set couples 'better on val' with
+'worse on test'."
+
+- **Origin**: v19 (8K rounds + lr=0.01 + MAE) improved val by 26 points but worsened LB
+  by 40 points compared to v18 (5K + lr=0.02 + MSE). Three "improvements" combined
+  produced overfit; v18's regularized baseline actually generalized better.
+- **Why it transfers**: Any "training-evaluate" process has the same structure: limited
+  evaluation samples + large parameter space = overfit the evaluation.
+- **Domains**: Education (over-practice on mock exams), academic ML (benchmark-specific
+  hyperparameter tuning), code review (linter complexity increases false positives),
+  hiring (more interview rounds)
+- **The paradox**: "Doing more" (more capacity, more tuning, more rounds) looks like
+  progress. It satisfies the proxy. But generalization is getting WORSE, invisibly.
+- **Action**: When increasing model capacity, also increase val diversity (multi-fold,
+  multi-window, multi-metric).
+- **Falsification attempted**: v19 — capacity increase without val diversity worsened LB.
+  Strongly supported.
+
+```yaml
+<!-- principle-metadata
+status: TestsPass
+scope: Domain
+decay_days: 365
+evidence_count: 1
+rescued_count: 1
+falsified_count: 0
+last_validated: 2026-06-02
+known_falsification_attempt: v19 (8K + lr=0.01 + MAE) had val 1371 but LB 2742
+-->
+```
+
+### Lessons from the Extraction Process
+
+1. **Without metadata, principles decay unmonitored** — "felt true" is not evidence.
+   The lifecycle schema in `lifecycle-metadata-schema.md` makes principle state explicit.
+2. **The 5-question abstraction works** — INVERSION / GENERALIZATION / TRANSFER /
+   PARADOX / META actually produced 4 distinct universal principles from 8 lessons.
+3. **Multi-perspective analysis filtered 2 of 6 candidates** — Pragmatist / Skeptic /
+   Cross-domain validator culled principles that didn't survive pragmatic reality or
+   cross-domain transfer.
+4. **Falsification count > 0 is healthy** — even one strong counter-example is
+   valuable data. The principles above all have at least one attempted falsification
+   documented in their `known_falsification` field.
