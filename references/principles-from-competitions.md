@@ -342,3 +342,39 @@ known_falsification_attempt: v19 (8K + lr=0.01 + MAE) had val 1371 but LB 2742
    4 principles (calibration = 1.00). This is the right outcome: claims matched records.
    If calibration had been < 1.0, it would have meant "we're overconfident about
    this principle rescuing us" — a useful signal to demote or re-validate.
+
+---
+
+## Self-Application: Meta-Principles About the Skill Itself
+
+When three-layer-wisdom-extraction is applied to itself, it produces 4
+**meta-principles** (M1-M4) about the methodology:
+
+| # | Meta-Principle | Status | Reference implementation |
+|---|----------------|--------|--------------------------|
+| **M1** | **Single-Actor Bias**: insights from one LLM reflect that LLM's blind spots; the cure is multi-actor validation | Testable (validated: 0/16 strong consensus in Walmart) | `multi_actor_extract.sh` |
+| **M2** | **Layer 3 Fatigue Ceiling**: beyond 7 principles, the marginal principle adds more confusion than clarity | Stated in skill, 11K-word threshold is heuristic | `cluster_principles.sh` |
+| **M3** | **Evidence Anchoring Requirement**: a principle without concrete in-project evidence becomes an unfalsifiable belief | ✅ Implemented (v1.1+) | metadata schema |
+| **M4** | **Self-Application Paradox**: applying a tool to itself reveals what it can't see; meta-tools must explicitly handle the recursion | Stops recursion at depth 1 | (terminator) |
+
+These are the **only 4** principles about the skill. Further "meta-meta"
+analysis is forbidden by M4 itself.
+
+### Why M1 is the most important
+
+M1 explains why three-layer-wisdom-extraction benefits from multi-actor
+validation. The Walmart 2026-06 experiment (16 principles from 3 actors
+on the same input, 0 strong consensus) confirmed M1 is a real bias, not a
+hypothetical concern. Single-actor extraction systematically:
+
+- **Skips failure modes** that the actor's training distribution underweights
+- **Inherits over-confidence** in the actor's favored abstraction level
+- **Misses domain transfers** the actor hasn't been exposed to
+
+The `multi_actor_extract.sh` tool is the practical response. Use it when
+the principles will guide high-stakes decisions, not for routine work.
+
+### See also
+
+- `lifecycle-metadata-schema.md` — schema + tooling section (v1.3)
+- Reference implementations in [Walmart Recruiting fork](https://github.com/topprismdata/walmart-recruiting/tree/main/memory/principles)

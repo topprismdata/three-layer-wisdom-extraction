@@ -147,13 +147,121 @@ Bar principle body.
 
 ## Tooling
 
-- `check_stale.sh` — reads each `<!-- principle-metadata -->` block, computes age,
-  emits FADING if age > decay_days. **v1.2 also reports calibration** (computed
-  from declared/verified) and flags `CAL_DRIFT` if declared ≠ computed, plus
-  `OVERCONFIDENT` if computed calibration < 0.5.
-- `check_duplicate.sh` — splits file by `## Principle` headers, computes Jaccard
-  word overlap between all pairs, flags potential duplicates. Reference
-  implementation in `bash-helpers/check_duplicate.sh` (~120 lines bash+python).
+Five categories of maintenance tools support the metadata schema. **None are
+required**, but each catches a distinct failure mode that the schema alone
+cannot prevent.
+
+### 1. `check_stale.sh` — Scope-decay checker
+
+Reads each `<!-- principle-metadata -->` block, computes age since
+`last_validated`, emits **FADING** if age > `decay_days`. **v1.2 also reports
+calibration** (computed from `declared_success`/`verified_actual`) and flags:
+
+- `CAL_DRIFT`: declared `calibration` ≠ computed value (drift > 0.05)
+- `OVERCONFIDENT`: computed calibration < 0.5 (claims > records)
+
+**Catches**: principles that have rotted past their TTL, hidden over-confidence.
+
+### 2. `check_duplicate.sh` — Jaccard dedup
+
+Splits file by `## Principle` headers, computes Jaccard word overlap between
+all pairs, flags potential duplicates (default threshold 0.4).
+
+**Catches**: principles that are too similar and should be merged. Important
+when 2 separate LLM sessions produce overlapping insights.
+
+### 3. `propagate.sh` — Multi-hop Bellman propagation (added v1.3)
+
+Reads each principle's `bellman_neighbours` field (a list of principle slugs
+this one shares evidence with). Builds a directed graph and computes
+utility flowing through the graph using multi-hop Bellman:
+
+```
+utility(p) = direct_evidence(p) + γ·utility(q) + γ²·utility(r) + ...
+```
+
+where `q` is a 1-hop neighbour, `r` is a 2-hop neighbour, and `γ` is the
+discount factor (default 0.3).
+
+**Outputs**:
+- Per-principle Direct / Bellman / Total utility
+- Multi-hop contribution matrix (who gives to whom)
+- Saturation status (graph converged?)
+- Status upgrade suggestions (TestsPass → Merged if Total > 2.0)
+
+**Catches**: principles that are isolated (no shared evidence with others),
+hidden interconnections between principles, cases where one principle's
+rescue is actually evidence for another.
+
+**Schema extension**: add `bellman_neighbours: [principle-slug-1, ...]`
+to each principle's metadata.
+
+### 4. `cluster_principles.sh` — Reader-fatigue metric (added v1.3)
+
+Counts total words/bytes across all principles. **Flags fatigue if total >
+11K words** (a research-backed threshold for working memory + reader
+retention). Suggests Jaccard-based clusters for auto-merge.
+
+**Catches**: principle bloat. Without this, a project that produces 15+
+principles will be unread. Forces explicit decisions about what to keep,
+merge, or archive.
+
+**Why 11K?** Reading research suggests retention drops sharply beyond ~5K
+words. 11K is the upper bound before clustering becomes essential.
+
+### 5. `multi_actor_extract.sh` — 3-persona validation (added v1.3)
+
+Runs 3 LLM extractions in parallel with different personas (empiricist /
+theoretician / pragmatist), synthesizes a consensus matrix. Surfaces the
+**Single-Actor Bias** (Meta-Principle M1): one LLM extraction has severe
+blind spots.
+
+**Outputs**:
+- Strong consensus (3/3 actors): include verbatim
+- Medium consensus (2/3 actors): include with caveat
+- Weak consensus (1/3 actors): drop or mark Untested
+
+**Catches**: principles that one persona finds obvious but others would
+reject. Particularly valuable for high-stakes extractions.
+
+**Validated**: in Walmart 2026-06, 0 strong consensus from 3 actors on 16
+principles — confirmed the meta-Principle M1 (single-actor extraction is
+fundamentally limited).
+
+### Tool Composition
+
+| Tool | When to run | Cost | Catches |
+|------|-------------|------|---------|
+| `check_stale.sh` | Every session, post-extraction | <1s | Decay, drift, over-confidence |
+| `check_duplicate.sh` | Adding a new principle | ~2s | Hidden duplicates |
+| `propagate.sh` | When `bellman_neighbours` change | ~1s | Interconnections, status upgrades |
+| `cluster_principles.sh` | When total > 5K words | ~2s | Reader fatigue |
+| `multi_actor_extract.sh` | High-stakes extractions only | ~30s + API cost | Single-actor bias |
+
+**Recommended cadence** (after every extraction or major edit):
+1. `check_stale.sh` (always)
+2. `check_duplicate.sh` (if you added a principle)
+3. `propagate.sh` (if you added/edited `bellman_neighbours`)
+4. `cluster_principles.sh` (if total > 5K)
+
+### Reference Implementations
+
+These tools are not bundled with this skill (it remains pure knowledge).
+Reference implementations are maintained in the [Walmart Recruiting project
+fork](https://github.com/topprismdata/walmart-recruiting):
+
+```
+memory/principles/
+├── check_stale.sh          # 145 lines bash
+├── check_duplicate.sh      # 130 lines bash+python
+├── propagate.sh            # 175 lines bash+python
+├── cluster_principles.sh   # 200 lines bash+python
+└── multi_actor_extract.sh  # 230 lines bash+python
+```
+
+Users implementing their own versions can adapt these to local conventions.
+The **methodology** (state machine + scope + decay + Bellman + multi-actor)
+is the contribution, not the bash scripts.
 
 ## Calibration Field (added v1.2)
 
