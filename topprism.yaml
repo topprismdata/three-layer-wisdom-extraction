@@ -1,20 +1,13 @@
 topprism:
-  purpose: native_ai
+  purpose: native-ai
   capability: knowledge_abstraction
-  platform_layer: organizational_intelligence
+  platform_layer: organizational-intelligence
   maturity: research
   evidence:
-    type: internal_evaluation
-    scope: "11 candidate / validated principles extracted from two project families"
-    notes: >-
-      Supports claim that the framework can structure abstraction.
-      Does not yet prove that extracted principles improve later
-      decisions in new projects (next evidence standard).
-  related:
-    - agent_nurture_framework
-    - cultivating_ml_agent
-    - skill_tester
-    - notebook_knowledge_distillation
+    type: internal-evaluation
+    source: topprism-internal-eval
+    scope: 11 candidate / validated principles extracted from two project families.
+    status: needs-next-evidence-standard
 
 business_question:
   en: >-
@@ -26,13 +19,13 @@ business_question:
     迁移到其他类型的工作？
 
 platform:
-  system: native_ai
-  layer: organizational_intelligence
-  solution: three_layer_wisdom_extraction
+  system: native-ai
+  layer: organizational-intelligence
+  solution: three-layer-wisdom-extraction
 
 website:
-  product_path: /native-ai/three-layer-wisdom-extraction
-  evidence_path: /evidence/three-layer-wisdom-extraction
+  status: planned
+  path: /native-ai/three-layer-wisdom-extraction
 
 repository:
   owner: topprismdata
