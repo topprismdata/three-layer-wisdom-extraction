@@ -72,11 +72,11 @@ It does not yet prove the more important claim:
 > **Does an extracted principle improve a later decision in a new
 > project?**
 
-That should become the next evidence standard.
+That is the next evidence standard.
 
 ------------------------------------------------------------------------
 
-## Recommended next evaluation
+## Roadmap
 
 For each principle:
 
