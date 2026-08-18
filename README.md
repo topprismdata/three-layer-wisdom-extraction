@@ -1,64 +1,125 @@
 # Three-Layer Wisdom Extraction
 
-A structured framework for extracting universal philosophical principles from concrete technical experiences. Built for use with [Claude Code](https://claude.ai/code) skills system.
+**Promoting project events into domain knowledge and cross-domain
+transferable principles.**
 
-## The Three Layers
+`NATIVE AI` · `RESEARCH` · `INTERNAL EVALUATION`
 
-| Layer | What it captures | Output |
-|-------|-----------------|--------|
-| **Layer 1: Breakthrough Path** | Raw timeline of attempts, outcomes, decision points | Chronological list with metrics |
-| **Layer 2: Domain Knowledge** | Field-specific insights, diagnostics, boundary conditions | Decision trees, comparison tables |
-| **Layer 3: Universal Principles** | Cross-domain patterns that transfer across fields | Named principles with validation |
+> **Native AI question:** Which lessons from a project are specific to
+> that project, which belong to the domain, and which may transfer to
+> other kinds of work?
 
-## Core Tool: Five Abstraction Questions
+------------------------------------------------------------------------
 
-Each Layer 2 insight is systematically processed through:
+## Why this exists
 
-1. **INVERSION** - What is the opposite, and when would it be correct?
-2. **GENERALIZATION** - Strip domain terms, what is the abstract structure?
-3. **TRANSFER** - Where else does this pattern appear? (2+ domains)
-4. **PARADOX** - What contradiction does this resolve?
-5. **META** - What does this reveal about the problem-solving process?
+Raw project history is too concrete to reuse directly.
 
-## Validation
+The framework separates three abstraction levels:
 
-Every Layer 3 principle must pass all six checks:
+  -----------------------------------------------------------------------
+  Layer                   Question                Output
+  ----------------------- ----------------------- -----------------------
+  L1 Event / Breakthrough What happened?          attempts, decisions,
+  Path                                            metrics
 
-- Domain independence (no jargon)
-- Predictive (would knowing this have changed your approach?)
-- Multi-domain (2+ fields)
-- Non-trivial (not obvious)
-- Actionable (concrete change suggested)
-- Falsifiable (evidence that would disprove it)
+  L2 Domain Knowledge     What should             rules, diagnostics,
+                          practitioners in this   boundary conditions
+                          field learn?            
 
-## Included Principles
+  L3 Transferable         What pattern may        falsifiable
+  Principle               survive outside this    cross-domain principle
+                          domain?                 
+  -----------------------------------------------------------------------
 
-`references/principles-from-competitions.md` contains 11 validated universal principles extracted from two projects:
+Use **transferable principle**, not "universal philosophical principle."
+The latter overstates what a small number of project observations can
+establish.
 
-- **Kaggle Store Sales** (6 principles): Distribution Mismatch, Decoupling, Context-Dependent Tool, Workaround Trap, Diagnosis-First, Duality
-- **Knowledge System Redesign** (5 principles): Meta-Knowledge Trap, Pruning-Over-Adding, External Validation, Maintenance Debt, Invisibility of Accumulation
+------------------------------------------------------------------------
 
-## Academic Foundations
+## Extraction flow
 
-- Reflexion (Shinn 2023)
-- ExpeL (Zhao 2024)
-- Common Wisdom Model (Grossmann 2020)
-- Structure-Mapping Theory (Gentner 1983)
-- Multi-Actor Insight Extraction (Nature Scientific Reports, 2025)
-
-## Installation
-
-Copy the `three-layer-wisdom-extraction/` directory to `~/.claude/skills/`:
-
-```bash
-cp -r three-layer-wisdom-extraction ~/.claude/skills/
+``` text
+Project events
+     ↓
+causal / diagnostic reconstruction
+     ↓
+domain lesson
+     ↓
+inversion + generalization + transfer tests
+     ↓
+candidate transferable principle
+     ↓
+multi-domain + falsifiability checks
 ```
 
-## Related Skills
+The current five abstraction questions and six validation checks are
+useful and should remain.
 
-- [claudeception](https://github.com/topprismdata/claudeception) - Layer 2 domain knowledge extraction
-- skill-refresh - Knowledge maintenance over time
+------------------------------------------------------------------------
 
-## License
+## Evidence
 
-MIT
+The repository currently contains 11 candidate / validated principles
+extracted from two project families.
+
+This supports the claim that the framework can **structure
+abstraction**.
+
+It does not yet prove the more important claim:
+
+> **Does an extracted principle improve a later decision in a new
+> project?**
+
+That should become the next evidence standard.
+
+------------------------------------------------------------------------
+
+## Recommended next evaluation
+
+For each principle:
+
+1.  record when it was extracted;
+2.  identify a later project where it should trigger;
+3.  test whether the agent retrieves it;
+4.  compare the decision with / without the principle;
+5.  record whether it helped, harmed, or was irrelevant.
+
+That turns wisdom extraction from a writing exercise into Native AI
+evidence.
+
+------------------------------------------------------------------------
+
+## Relationship to TopPrism Native AI
+
+``` text
+project experience
+      ↓
+three-layer extraction
+      ↓
+domain knowledge / transferable principle
+      ↓
+skill candidate
+      ↓
+skill-tester
+      ↓
+organizational capability
+```
+
+Related: - `agent-nurture-framework` - `cultivating-ml-agent` -
+`skill-tester` - `notebook-knowledge-distillation`
+
+------------------------------------------------------------------------
+
+## TopPrism metadata
+
+``` yaml
+topprism:
+  purpose: native-ai
+  capability: knowledge-abstraction
+  platform_layer: organizational-intelligence
+  maturity: research
+  evidence:
+    type: internal-evaluation
+```
